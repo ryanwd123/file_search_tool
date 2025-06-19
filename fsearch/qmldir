@@ -1,0 +1,4 @@
+module fsearch
+typeinfo backend.qmltypes
+typeinfo file_model.qmltypes
+typeinfo file_operations.qmltypes

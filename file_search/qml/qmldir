@@ -1,0 +1,2 @@
+singleton Utils 1.0 Utils.qml
+singleton AsyncRequest 1.0 AsyncRequest.qml
