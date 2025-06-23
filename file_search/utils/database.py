@@ -156,10 +156,12 @@ class DatabaseManager:
         try:
             session = self.get_session()
             try:
-                query = session.query(
+                query = (session.query(
                     File,
                     Favorite.id.isnot(None).label("is_favorite"),
                 ).join(Favorite, File.file_path == Favorite.file_path)
+                .order_by(File.last_modified_date.desc())
+                )
                 return query.all()
             except SQLAlchemyError as e:
                 raise Exception(f"Failed to get favorites: {str(e)}")
@@ -195,7 +197,7 @@ class DatabaseManager:
         try:
             session = self.get_session()
             try:
-                files = session.query(File).filter(File.scan_folder == scan_folder).all()
+                files = session.query(File).filter(File.scan_folder == str(scan_folder)).all()
                 return files
             except SQLAlchemyError as e:
                 raise Exception(f"Failed to get files for scan folder: {str(e)}")
@@ -278,7 +280,12 @@ class DatabaseManager:
                 # Delete files where scan_folder is not in the folders to index
                 deleted_count = (
                     session.query(File)
-                    .filter(~File.scan_folder.in_(session.query(FolderToIndex.file_path)))
+                    .filter(
+                        and_(
+                            ~File.scan_folder.in_(session.query(FolderToIndex.file_path)),
+                            File.scan_folder != 'recent_files'  # Exclude recent_files from deletion
+                        )
+                    )
                     .delete(synchronize_session=False)
                 )
                 session.commit()

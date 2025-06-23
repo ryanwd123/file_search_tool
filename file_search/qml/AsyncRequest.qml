@@ -15,18 +15,6 @@ QtObject {
         });
     }
 
-    function urlToPath(fileUrl) {
-        // Convert file URL to local path
-        var path = fileUrl.toString().replace(/^file:\/\/\//, '')
-        
-        // On Windows, replace forward slashes with backslashes
-        if (Qt.platform.os === "windows") {
-            path = path.replace(/\//g, '\\')
-        }
-        
-        return path
-    }
-
     function insertRecord(table, column_names: var, values: var) {
 
         AsyncRequest.request({

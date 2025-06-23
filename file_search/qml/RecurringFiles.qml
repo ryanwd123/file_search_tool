@@ -60,17 +60,6 @@ Rectangle {
         id: model
     }
 
-    FolderDialog {
-        id: folderDialog
-        title: "Select Folder to Add"
-        onAccepted: {
-            var path = selectedFolder.toString();
-            path = AsyncRequest.urlToPath(path)
-            AsyncRequest.insertRecord(root.table, [root.column], [path]);
-            console.log(path)
-            root.updateList()
-        }
-    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -84,12 +73,7 @@ Rectangle {
         }
         Row {
             Layout.alignment: Qt.AlignCenter
-            Button {
-                text: "Add Item"
-                font.pixelSize: Utils.mainText - 2
-                font.family: "consolas"
-                onClicked: folderDialog.open()
-            }
+
 
             Button {
                 text: "Remove Item"

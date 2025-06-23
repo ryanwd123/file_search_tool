@@ -73,7 +73,7 @@ Rectangle {
         title: "Select Folder to Add"
         onAccepted: {
             var path = selectedFolder.toString();
-            path = AsyncRequest.urlToPath(path);
+            path = FileOps.uri_to_path(path)
             AsyncRequest.insertRecord(root.table, [root.column], [path]);
             console.log(path);
             root.updateList();

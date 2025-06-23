@@ -5,7 +5,7 @@ This module provides QObject classes for file operations that can be exposed to 
 """
 import os
 from pathlib import Path
-from PySide6.QtCore import QObject, Slot
+from PySide6.QtCore import QObject, Slot, QUrl
 from PySide6.QtQml import QmlElement, QmlSingleton
 import subprocess
 import random
@@ -172,5 +172,7 @@ class FileOps(QObject):
         except Exception as e:
             return str(e)
         
-
+    @Slot(str, result=str)
+    def uri_to_path(self, uri:str):
+        return str(Path(QUrl(uri).toLocalFile()))
 

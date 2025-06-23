@@ -14,6 +14,7 @@ files = [
     "file_search\\qml\\HelpScreen.qml",
     "file_search\\qml\\main.qml",
     "file_search\\qml\\ManageIgnore.qml",
+    "file_search\\qml\\ManageSharepointPaths.qml",
     "file_search\\qml\\ManageTableListDelegate.qml",
     "file_search\\qml\\ManageTables.qml",
     "file_search\\qml\\MenuItemWithShortcut.qml",
@@ -24,6 +25,7 @@ files = [
     "file_search\\qml\\viewers\\PdfViewer.qml",
     "file_search\\qml\\viewers\\PdfViewerComponent.qml",
     "file_search\\qml\\viewers\\TextViewerComponent.qml",
+    "file_search\\app.py",
     "file_search\\backend.py",
     "file_search\\__init__.py",
     "file_search\\__main__.py",
@@ -31,6 +33,7 @@ files = [
     "file_search\\utils\\db_worker.py",
     "file_search\\utils\\file_model.py",
     "file_search\\utils\\file_operations.py",
+    "file_search\\utils\\recent_files.py",
     "file_search\\utils\\scanner.py",
     "file_search\\utils\\thread_check.py",
     "file_search\\utils\\utils.py"

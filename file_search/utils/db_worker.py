@@ -63,7 +63,7 @@ class DatabaseWorker(QObject):
                                 last_modified_date=file_info["modified_time"],
                                 scan_folder=file_info["scan_folder"],
                             )
-                            session.add(new_file)
+                            session.merge(new_file)
                         files_updated += 1
 
                     # Commit each batch with proper mutex handling
@@ -107,10 +107,15 @@ class DatabaseWorker(QObject):
         if not folders:
             return
         folders = [x[0] for x in folders]  # type: ignore
+        folders.append('recent_files')
         folders_dict = {}
 
         for f in folders:
             folders_dict[f] = self.db_manager.get_files_for_scan_folder(f)
+
+        for k, v in folders_dict.items():
+            print(f'{k}, {len(v)}')
+
 
         scan_info = ScanInfo(
             folders_to_scan=folders_dict,

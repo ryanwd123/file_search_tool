@@ -1,10 +1,13 @@
+import traceback
 import time
 import os
 import datetime
 import threading
+from pathlib import Path
 from PySide6.QtCore import QObject, Signal, QThreadPool, QRunnable, Slot
 from .utils import ScanInfo
 from .database import File
+from .recent_files import get_recent_file_data
 # from .thread_check import print_active_threads
 
 ignored_file_types = set([
@@ -24,6 +27,22 @@ class ScanTask(QRunnable):
         """Execute the folder scan"""
         self.scanner.scan_folder(self.folder_path, self.folders_to_ignore, self.folder_files)
 
+class ScanRecentTask(QRunnable):
+    def __init__(self, scanner, recent:list[File], ignore:list[str]):
+        super().__init__()
+        self.scanner:'FileScanner' = scanner
+        self.recent = recent
+        self.ignore = ignore
+
+    
+    def run(self):
+        """Execute the folder scan"""
+        try:
+            self.scanner.recent_files(self.recent, self.ignore)
+        except Exception as e:
+            print(f'Error with recent files: {e}')
+            print("Full traceback:")
+            traceback.print_exc()
 
 class FileScanner(QObject):
     scanSignal = Signal(str)  # current_path, files_processed, total_files
@@ -52,9 +71,7 @@ class FileScanner(QObject):
         self.batches_completed = 0
         self.start_time = 0
 
-        
-    
-    
+
     
     def scan_folder(self, folder_to_scan, folders_to_ignore:list[str], folder_files_prior:list[File]):
         """
@@ -146,9 +163,9 @@ class FileScanner(QObject):
             if folder_files or paths_to_delete:
 
                 self.batch_scan_to_send.emit(folder_files, paths_to_delete)
-                self.batches_emitted += 1
 
             with self.task_lock:
+                self.batches_emitted += 1
                 self.scanned_folders += 1
                 print(f'on folder completed, scanned folder {self.scanned_folders} of {self.total_folders}, batch completed {self.batches_completed} of {self.batches_emitted}')
                 if self.scanned_folders == self.total_folders:
@@ -171,7 +188,59 @@ class FileScanner(QObject):
             error_msg = f"Error scanning {folder_to_scan}: {e}"
             print(error_msg)
             self.scan_error.emit(error_msg)
+    
+    def recent_files(self, recent:list[File], folders_to_ignore:list[str]):
+        new_data = get_recent_file_data()
+        old_data = {r.file_path:r for r in recent}
+        print(f'recent count new: {len(new_data)}, count old: {len(old_data)}')
         
+        result = []
+        new_paths = set([f.file_path for f in recent])
+
+        for f in new_data:
+            new_path = f['path']
+            new_time = f['modified_time']
+            new_size = f['file_size']
+            new_folder = f['scan_folder']
+
+            if new_path in old_data:
+                if new_time == old_data[new_path].last_modified_date:
+                    continue
+            result.append({
+                    'path': new_path,
+                    'modified_time': new_time,
+                    'file_size': new_size,
+                    'scan_folder':new_folder
+                })
+
+        delete = []
+
+        for path, item in old_data.items():
+            if path in new_paths:
+                continue
+            if str(path).lower().startswith('http'):
+                continue
+            if Path(str(path)).exists():
+                continue
+            delete.append(path)
+
+        print(f'emit recent update: {len(result)}, delete: {len(delete)}')
+        self.batch_scan_to_send.emit(result, delete)
+
+
+        with self.task_lock:
+            self.batches_emitted += 1
+            self.scanned_folders += 1
+            print(f'on folder completed, scanned folder {self.scanned_folders} of {self.total_folders}, batch completed {self.batches_completed} of {self.batches_emitted}')
+            if self.scanned_folders == self.total_folders:
+                self.scan_status = f'scanned {self.scanned_folders} of {self.total_folders} folders, processing db updates'
+                self.scanSignal.emit(self.scan_status)
+            else:
+                self.scan_status = f'scanned {self.scanned_folders} of {self.total_folders} folders'
+                self.scanSignal.emit(self.scan_status)
+
+
+
     
     @Slot(ScanInfo)
     def run_scan(self, scan_info:ScanInfo):
@@ -197,8 +266,14 @@ class FileScanner(QObject):
 
             
             print(f"Got {len(scan_info.folders_to_scan.keys())} folders to scan, {len(scan_info.folders_to_ignore)} folders to ignore")
+            if 'recent_files' in scan_info.folders_to_scan:
+                recent = scan_info.folders_to_scan.pop('recent_files')
+                task = ScanRecentTask(self, recent,scan_info.folders_to_ignore)
+            else:
+                self.total_folders += 1
+                task = ScanRecentTask(self, [],scan_info.folders_to_ignore)
             
-            
+            self.threadpool.start(task)
             
             print(f"Submitting {len(scan_info.folders_to_scan.keys())} folders to threadpool with {self.threadpool.maxThreadCount()} threads")
             

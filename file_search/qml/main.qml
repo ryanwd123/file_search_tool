@@ -306,10 +306,10 @@ ApplicationWindow {
         sequences: ['F4']
         onActivated: scan_timer.restart()
     }
-    // Shortcut {
-    //     sequences: ['F5']
-    //     onActivated: root.toggle_view2("RecurringFiles.qml")
-    // }
+    Shortcut {
+        sequences: ['F5']
+        onActivated: root.toggle_view2("ManageSharepointPaths.qml")
+    }
     Shortcut {
         sequences: ['Ctrl+e']
         onActivated: {

@@ -38,5 +38,10 @@ Module {
             type: "QString"
             Parameter { name: "a1"; type: "QString" }
         }
+        Method {
+            name: "uri_to_path"
+            type: "QString"
+            Parameter { name: "a1"; type: "QString" }
+        }
     }
 }
